@@ -7,28 +7,30 @@ raiz = Tk()
 #variable
 usuario = StringVar()
 password = StringVar()
-
-u = "1"
-p = "12345"
-
+verificacion=True
 
 def verificarDatosIngresados():
 
+    global verificacion
 # establacer conexión
     conexion = sqlite3.connect("./sqlite3/bbdd.sql")
 
 # seleccionar cursor para realizar la consulta
     consulta = conexion.cursor()
-    argumentos=(usuario.get(), password.get())
 
-    sql = "select * from usuario where nombre_usuario=? and contraseña=?"
+    sql = "select * from usuario where nombre_usuario={0} and contraseña={1}" .format(usuario.get(), password.get()) 
 
+    consulta.execute(sql)
 
-    if consulta.execute(sql, argumentos):
-        filas = consulta.fetchone()
-        print(filas[0],filas[1],filas[2],filas[3],filas[4])
-
-
+    fila = consulta.fetchone()
+        # print(fila[0],fila[1],fila[2],fila[3],fila[4],fila[5])
+    if fila is None:
+        print(fila)
+        print('Verifica los datos ingresados.')
+    else:
+        print(fila)
+        print('Ingreso correcto!')
+  
     consulta.close()
     conexion.commit()
     conexion.close()
@@ -62,7 +64,6 @@ labelPassword.grid(row=1,column=0, sticky="w", pady=4, padx=4)
 campoPassword = Entry(frameMain,  justify=CENTER, textvariable=password)
 campoPassword.grid(row=1,column=1, padx=10)
 campoPassword.config(show="*")
-password = campoPassword.get()
 
 # botonLogin = Button(frameMain, text="Login")
 botonLogin = Button(frameMain, text="Login", command=lambda:verificarDatosIngresados())
