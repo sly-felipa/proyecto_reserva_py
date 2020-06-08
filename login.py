@@ -7,33 +7,61 @@ raiz = Tk()
 #variable
 usuario = StringVar()
 password = StringVar()
-verificacion=True
+validacionDatos = None
 
 def verificarDatosIngresados():
 
-    global verificacion
 # establacer conexión
     conexion = sqlite3.connect("./sqlite3/bbdd.sql")
 
 # seleccionar cursor para realizar la consulta
     consulta = conexion.cursor()
+    # sql = "select * from usuario where nombre_usuario={0} and contraseña={1}" .format(usuario.get(), password.get()) 
 
-    sql = "select * from usuario where nombre_usuario={0} and contraseña={1}" .format(usuario.get(), password.get()) 
+    buscarUsuario = True
+    buscarPassword = True
 
-    consulta.execute(sql)
-
-    fila = consulta.fetchone()
-        # print(fila[0],fila[1],fila[2],fila[3],fila[4],fila[5])
-    if fila is None:
-        print(fila)
-        print('Verifica los datos ingresados.')
+    if consulta.execute("select * from usuario"):
+        # fila = consulta.fetchone()
+        filas = consulta.fetchall()
+        for fila in filas:
+            # print(fila[0],fila[1],fila[2],fila[3],fila[4],fila[5])
+            if fila[0] == usuario.get() and buscarUsuario == True:
+                print("usuario - ok")
+                buscarUsuario = False
+                if fila[3] == password.get() and buscarPassword == True:
+                    buscarPassword = False
+                    validacionDatos = True
+                    print("pass - ok")
     else:
-        print(fila)
-        print('Ingreso correcto!')
-  
+        print("Error en la consulta a la BBDD")
+    
+    if buscarUsuario == True:
+        print("Usuario incorrecto")
+        validacionDatos = False
+        campoUsuario.delete(0, 'end')
+
+    if buscarPassword == True:
+        print("Password incorrecto")
+        campoPassword.delete(0, 'end')
+
+    # if fila is None:
+
     consulta.close()
-    conexion.commit()
     conexion.close()
+
+    cerrarVentanaLogin(validacionDatos)
+
+def cerrarVentanaLogin(validacion):
+
+    if validacion == True:
+       print("salir")
+       # llama a la ventana reservas
+       raiz.quit()
+    else:
+         print("no salir")
+
+
 
 
 # raiz.geometry("650x350")
@@ -65,12 +93,12 @@ campoPassword = Entry(frameMain,  justify=CENTER, textvariable=password)
 campoPassword.grid(row=1,column=1, padx=10)
 campoPassword.config(show="*")
 
-# botonLogin = Button(frameMain, text="Login")
 botonLogin = Button(frameMain, text="Login", command=lambda:verificarDatosIngresados())
 botonLogin.grid(row=2,column=0,sticky="e", pady=4,padx=1)
 
 botonRegistro= Button(frameMain, text="Registrarse", command=raiz.quit)
 botonRegistro.grid(row=2,column=1,sticky="s", pady=4, padx=1)
+
 
 
 
