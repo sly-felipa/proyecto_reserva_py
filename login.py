@@ -61,9 +61,6 @@ def cerrarVentanaLogin(validacion):
     else:
          print("no salir")
 
-
-
-
 # raiz.geometry("650x350")
 
 raiz.title("Login")
