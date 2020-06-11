@@ -59,7 +59,7 @@ VALUES ('p1','0','1','Es bonito'),
 # os.getcwd()
 
 # ejecutar insert
-if (consulta.execute(sqlUsuario)): 
+if consulta.execute(sqlUsuario): 
     print("sqlUsuario correcto")
 else:
     print("sqlUsuario INcorrecto")

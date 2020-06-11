@@ -1,5 +1,7 @@
 from tkinter import *
 import sqlite3
+import datetime
+import re
 
 #genera la ventana
 raiz = Tk()
@@ -11,10 +13,75 @@ usuario = StringVar()
 password = StringVar()
 rePassword = StringVar()
 email = StringVar()
-validacionDatos = None
+listaVerificacion = []
+validacionOK = None
+matchLetras = '^[a-z\sáéíóúñ]+$'
+matchAlfanumerico = '^[a-z0-9]+$'
+matchPass = '[^\s]$'
+matchEmail = '^[a-zA-Z0-9\._-]+@[a-zA-Z0-9-]{2,}[.][a-zA-Z]{2,4}$'
 
-def verificarDatosIngresados():
-    x = None
+def run():
+
+    global listaVerificacion
+    listaVerificacion.append(validarDatos(nombre.get(),matchLetras))
+    listaVerificacion.append(validarDatos(apellido.get(),matchLetras))
+    listaVerificacion.append(validarDatos(usuario.get(),matchAlfanumerico))
+    listaVerificacion.append(validarDatos(password.get(),matchPass))
+    listaVerificacion.append(validarDatos(rePassword.get(),matchPass))
+    listaVerificacion.append(validarDatos(email.get(),matchEmail))
+
+# se verifica que todos los elementos de listaVerificacion sean True
+    verfificarValidacion()
+
+# se agrega el usuario nuevo a la BBDD
+    agregarFilaBBDD()
+
+
+def validarDatos(datoIngresado, match):
+
+    if re.search(match,datoIngresado,re.I) is not None:
+        print("Usuario correcto! " + datoIngresado)
+        ingresoCorrecto = True
+    else:
+        print("Usuario incorrecto! " + datoIngresado)
+        ingresoCorrecto =False
+    
+    return ingresoCorrecto
+
+def verfificarValidacion():
+
+    global validacionOK
+
+    if False in listaVerificacion:
+        validacionOK = False
+    else:
+        validacionOK = True
+
+def agregarFilaBBDD():
+
+# establacer conexión
+    conexion = sqlite3.connect("./sqlite3/bbdd.sql")
+
+# seleccionar cursor para realizar la consulta
+    consulta = conexion.cursor()
+
+    datos = (usuario.get(), nombre.get(), apellido.get(), password.get(), datetime.date.today(), email.get())
+    usuarioNuevoBBDD = """
+    INSERT INTO usuario values (?, ?, ?, ?, ?, ?)""" 
+    # usuarioNuevoBBDD = """
+    # INSERT INTO usuario values ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')""" .format(usuario.get(), nombre.get(), apellido.get(), password.get(), datetime.date.today())
+
+    if consulta.execute(usuarioNuevoBBDD, datos):
+        print("ingreso correcto")
+        conexion.commit()
+    else:
+        print("Error en la consulta a la BBDD")
+
+    consulta.close()
+    conexion.close()
+
+    return None
+    
 # raiz.geometry("650x350")
 
 raiz.title("Registro")
@@ -103,8 +170,8 @@ labelEmailObligatorio.grid(row=6,column=2, sticky="w", pady=10, padx=15)
 labelEmailObligatorio.grid_remove()
 
 # botón
-botonRegistro= Button(frameMain, text="Registrarse", command=lambda:verificarDatosIngresados())
-botonRegistro.grid(row=7,column=1,sticky="s", pady=10, padx=1)
+botonRegistro= Button(frameMain, text="Registrarse", command=lambda:run())
+botonRegistro.grid(row=7,column=1,sticky="s", pady=10, padx=1, ipady=5, ipadx=5)
 
 
 
