@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import ttk
 import sqlite3
 import datetime
 import re
@@ -13,67 +14,102 @@ usuario = StringVar()
 password = StringVar()
 rePassword = StringVar()
 email = StringVar()
+avisoPassword = StringVar()
 listaVerificacion = []
 validacionOK = None
+passwordOK = None
 matchLetras = '^[a-z\sáéíóúñ]+$'
 matchAlfanumerico = '^[a-z0-9]+$'
 matchPass = '[^\s]$'
 matchEmail = '^[a-zA-Z0-9\._-]+@[a-zA-Z0-9-]{2,}[.][a-zA-Z]{2,4}$'
 
+ 
 def run():
 
     global listaVerificacion
-    listaVerificacion.append(validarDatos(nombre.get(),matchLetras))
-    listaVerificacion.append(validarDatos(apellido.get(),matchLetras))
-    listaVerificacion.append(validarDatos(usuario.get(),matchAlfanumerico))
-    listaVerificacion.append(validarDatos(password.get(),matchPass))
-    listaVerificacion.append(validarDatos(rePassword.get(),matchPass))
-    listaVerificacion.append(validarDatos(email.get(),matchEmail))
+
+    listaVerificacion.clear()
+    avisoPassword.set("Campo obligatorio!")
+
+    listaVerificacion.append(validarDatoIngresado(nombre.get(),matchLetras,labelNombreObligatorio))
+    listaVerificacion.append(validarDatoIngresado(apellido.get(),matchLetras,labelApellidoObligatorio))
+    listaVerificacion.append(validarDatoIngresado(usuario.get(),matchAlfanumerico,labelUsuarioObligatorio))
+    listaVerificacion.append(validarDatoIngresado(password.get(),matchPass,labelPasswordObligatorio))
+    listaVerificacion.append(validarDatoIngresado(rePassword.get(),matchPass,labelRepasswordObligatorio))
+    listaVerificacion.append(validarDatoIngresado(email.get(),matchEmail,labelEmailObligatorio))
+    print(listaVerificacion)
+
+    coincideciaPassword(listaVerificacion[3],listaVerificacion[4])
+    # avisoPassword.set("Campo !")
+
+    print(avisoPassword.get())
+
 
 # se verifica que todos los elementos de listaVerificacion sean True
-    verfificarValidacion()
+    verificarValidacion() # validacionOK
 
+    if validacionOK and passwordOK:
 # se agrega el usuario nuevo a la BBDD
-    agregarFilaBBDD()
+        agregarFilaBBDD()
 
-
-def validarDatos(datoIngresado, match):
+def validarDatoIngresado(datoIngresado, match, labelObligatorio):
 
     if re.search(match,datoIngresado,re.I) is not None:
         print("Usuario correcto! " + datoIngresado)
         ingresoCorrecto = True
+        labelObligatorio.grid_remove()
+
     else:
         print("Usuario incorrecto! " + datoIngresado)
         ingresoCorrecto =False
+        labelObligatorio.grid()
     
     return ingresoCorrecto
 
-def verfificarValidacion():
+def verificarValidacion():
 
     global validacionOK
 
     if False in listaVerificacion:
         validacionOK = False
+        print("listaVerificacion False")
     else:
         validacionOK = True
 
+def coincideciaPassword(Password, Repassword):
+
+    if Password and Repassword:
+        if password.get() == rePassword.get():
+            print("coinciden pass")
+            passwordOK = True 
+            labelPasswordObligatorio.grid_remove()
+
+        else:
+            print("NO coinciden pass")
+            passwordOK = False
+            avisoPassword.set("Verifica la contraseña")
+            labelPasswordObligatorio.grid()
+    else:
+        passwordOK = False
+        print("labelPasswordObligatorio.grid_remove()")
+
+    return passwordOK
+
 def agregarFilaBBDD():
 
-# establacer conexión
+    # establacer conexión
     conexion = sqlite3.connect("./sqlite3/bbdd.sql")
 
-# seleccionar cursor para realizar la consulta
+    # seleccionar cursor para realizar la consulta
     consulta = conexion.cursor()
 
     datos = (usuario.get(), nombre.get(), apellido.get(), password.get(), datetime.date.today(), email.get())
     usuarioNuevoBBDD = """
     INSERT INTO usuario values (?, ?, ?, ?, ?, ?)""" 
-    # usuarioNuevoBBDD = """
-    # INSERT INTO usuario values ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')""" .format(usuario.get(), nombre.get(), apellido.get(), password.get(), datetime.date.today())
 
     if consulta.execute(usuarioNuevoBBDD, datos):
         print("ingreso correcto")
-        conexion.commit()
+        # conexion.commit()
     else:
         print("Error en la consulta a la BBDD")
 
@@ -98,15 +134,16 @@ frameMain.pack(fill="both", expand="true")
 
 # frameMain.config(bg="blue")
 
-labelCampoObligatorio = Label(frameMain, fg="gray", text="* campos obligatorios")
+labelCampoObligatorio = Label(frameMain, fg="gray", text="* campos obligatorios", font=(10))
 labelCampoObligatorio.grid(row=0,column=2, pady=10, padx=10)
 
 # nombre
 labelNombre = Label(frameMain, text="Nombre *", font=(12))
 labelNombre.grid(row=1,column=0, sticky="w", pady=10, padx=10)
 
-campoNombre = Entry(frameMain, justify=CENTER, textvariable=nombre)
+campoNombre = ttk.Entry(frameMain, justify=CENTER, textvariable=nombre)
 campoNombre.grid(row=1,column=1, padx=10)
+campoNombre.focus()
 
 labelNombreObligatorio = Label(frameMain, fg="red", text="Campo obligatorio!")
 labelNombreObligatorio.grid(row=1,column=2, sticky="w", pady=10, padx=15)
@@ -142,7 +179,7 @@ campoPassword = Entry(frameMain,  justify=CENTER, textvariable=password)
 campoPassword.grid(row=4,column=1, padx=10)
 campoPassword.config(show="*")
 
-labelPasswordObligatorio = Label(frameMain, fg="red", text="Campo obligatorio!") # verificar contraseña
+labelPasswordObligatorio = Label(frameMain, fg="red", textvariable=avisoPassword) # verificar contraseña
 labelPasswordObligatorio.grid(row=4,column=2, sticky="w", pady=10, padx=15)
 labelPasswordObligatorio.grid_remove()
 
